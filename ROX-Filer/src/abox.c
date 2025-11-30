@@ -27,7 +27,6 @@
 #include <string.h>
 
 #include "global.h"
-
 #include "main.h"
 #include "abox.h"
 #include "gui_support.h"
@@ -78,7 +77,7 @@ GType abox_get_type(void)
 GtkWidget* abox_new(const gchar *title, gboolean quiet)
 {
 	GtkWidget *widget;
-	ABox	  *abox;
+	ABox *abox;
 
 	widget = GTK_WIDGET(g_object_new(abox_get_type(), NULL));
 	abox = (ABox *) widget;
@@ -86,6 +85,7 @@ GtkWidget* abox_new(const gchar *title, gboolean quiet)
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(abox->quiet), quiet);
 
 	gtk_window_set_title(GTK_WINDOW(widget), title);
+
 	/* GTK4: gtk_dialog_set_has_separator removed - separators don't exist in GTK4 */
 
 	return widget;
@@ -93,23 +93,26 @@ GtkWidget* abox_new(const gchar *title, gboolean quiet)
 
 static void abox_class_init(GObjectClass *gclass, gpointer data)
 {
-	GtkWidgetClass *widget = (GtkWidgetClass *) gclass;
-	GtkDialogClass *dialog = (GtkDialogClass *) gclass;
-	ABoxClass *abox = (ABoxClass *) gclass;
+	GtkDialogClass	*dialog = (GtkDialogClass *) gclass;
+	ABoxClass	*abox = (ABoxClass *) gclass;
 
 	/* GTK4 TODO: delete_event signal removed, use "close-request" signal instead */
+
 	dialog->response = response;
 	abox->flag_toggled = NULL;
 	abox->abort_operation = NULL;
 
 	g_signal_new("flag_toggled", G_TYPE_FROM_CLASS(gclass),
 		G_SIGNAL_RUN_LAST, G_STRUCT_OFFSET(ABoxClass, flag_toggled),
-		NULL, NULL, g_cclosure_marshal_VOID__INT,
-		G_TYPE_NONE, 1, G_TYPE_INT);
+		NULL, NULL,
+		g_cclosure_marshal_VOID__INT,
+		G_TYPE_NONE, 1,
+		G_TYPE_INT);
 
 	g_signal_new("abort_operation", G_TYPE_FROM_CLASS(gclass),
 		G_SIGNAL_RUN_LAST, G_STRUCT_OFFSET(ABoxClass, abort_operation),
-		NULL, NULL, g_cclosure_marshal_VOID__VOID,
+		NULL, NULL,
+		g_cclosure_marshal_VOID__VOID,
 		G_TYPE_NONE, 0);
 
 	gclass->finalize = abox_finalise;
@@ -127,17 +130,19 @@ static void abox_init(GTypeInstance *object, gpointer gclass)
 
 	abox->dir_label = gtk_label_new(_("<dir>"));
 	gtk_widget_set_size_request(abox->dir_label, 8, -1);
+
 	abox->results = NULL;
 	abox->entry = NULL;
 	abox->next_dir = NULL;
 	abox->next_timer = 0;
 	abox->question = FALSE;
+
 	gtk_label_set_xalign(GTK_LABEL(abox->dir_label), 0.5);
 	gtk_label_set_yalign(GTK_LABEL(abox->dir_label), 0.5);
 	gtk_box_append(GTK_BOX(gtk_dialog_get_content_area(dialog)),
 			abox->dir_label);
 
-abox->log_hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+	abox->log_hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
 	gtk_box_append(GTK_BOX(gtk_dialog_get_content_area(dialog)),
 			abox->log_hbox);
 	gtk_widget_set_vexpand(abox->log_hbox, TRUE);
@@ -170,8 +175,6 @@ abox->log_hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
 	gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(text), FALSE);
 	gtk_widget_set_size_request(text, 400, 100);
 
-	gtk_box_append(GTK_BOX(abox->log_hbox), scrollbar);
-
 	gtk_dialog_add_buttons(dialog,
 			"_Cancel", GTK_RESPONSE_CANCEL,
 			"_No", GTK_RESPONSE_NO,
@@ -184,88 +187,99 @@ abox->log_hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
 			abox->cmp_area);
 	gtk_widget_set_margin_top(abox->cmp_area, 2);
 	gtk_widget_set_margin_bottom(abox->cmp_area, 2);
+
 	gtk_grid_set_row_spacing(GTK_GRID(abox->cmp_area), 2);
 	gtk_grid_set_column_spacing(GTK_GRID(abox->cmp_area), 2);
 
 	for (i = 0; i < 2; i++)
 	{
-
 		abox->cmp_icon[i] = gtk_image_new();
 		gtk_grid_attach(GTK_GRID(abox->cmp_area),
-			abox->cmp_name[i], 0, i, 1, 1);
-		/* GTK4: No expand/fill/padding params in gtk_grid_attach */
+			abox->cmp_icon[i], 0, i, 1, 1);
+
 		abox->cmp_name[i] = gtk_label_new("");
 		gtk_label_set_wrap(GTK_LABEL(abox->cmp_name[i]), TRUE);
 		gtk_label_set_xalign(GTK_LABEL(abox->cmp_name[i]), 0.);
 		gtk_label_set_yalign(GTK_LABEL(abox->cmp_name[i]), 0.5);
 		gtk_grid_attach(GTK_GRID(abox->cmp_area),
-			abox->cmp_size[i], 1, i, 1, 1);
-		gtk_widget_set_hexpand(abox->cmp_size[i], TRUE);
+			abox->cmp_name[i], 1, i, 1, 1);
+
 		abox->cmp_size[i] = gtk_label_new("");
 		gtk_grid_attach(GTK_GRID(abox->cmp_area),
-			abox->cmp_at[i], 2, i, 1, 1);
-				GTK_SHRINK, GTK_SHRINK, 4, 1);
+			abox->cmp_size[i], 2, i, 1, 1);
+		gtk_widget_set_hexpand(abox->cmp_size[i], TRUE);
+
 		abox->cmp_date[i] = gtk_label_new("");
-		gtk_table_attach(GTK_TABLE(abox->cmp_area),
-				abox->cmp_date[i],
-				4, 5, i, i + 1,
-				GTK_SHRINK, GTK_SHRINK, 4, 1);
+		gtk_grid_attach(GTK_GRID(abox->cmp_area),
+			abox->cmp_date[i], 4, i, 1, 1);
 	}
+
 	/* GTK4: GtkArrow removed - use symbolic icon instead */
 	abox->cmp_arrow = gtk_image_new_from_icon_name("pan-down-symbolic");
 	gtk_widget_set_size_request(abox->cmp_arrow, 32, 64);
 	gtk_grid_attach(GTK_GRID(abox->cmp_area),
-			abox->cmp_arrow, 3, i, 1, 1);
-		gtk_widget_set_vexpand(abox->cmp_arrow, TRUE);
+		abox->cmp_arrow, 3, 0, 1, 2);
+	gtk_widget_set_vexpand(abox->cmp_arrow, TRUE);
 
-abox->progress=NULL;
+	abox->progress = NULL;
 	abox->flag_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 16);
 	gtk_box_append(GTK_BOX(gtk_dialog_get_content_area(dialog)),
 			abox->flag_box);
 	gtk_widget_set_margin_top(abox->flag_box, 2);
 	gtk_widget_set_margin_bottom(abox->flag_box, 2);
+
 	button = button_new_mixed("go-last", _("_Quiet"));
 	/* GTK4: GTK_WIDGET_SET_FLAGS removed - can-default is automatic */
 	gtk_dialog_add_action_widget(dialog, button, RESPONSE_QUIET);
 	gtk_dialog_set_default_response(dialog, RESPONSE_QUIET);
+
 	/* GTK4: gtk_widget_show_all removed - widgets visible by default */
 	gtk_widget_set_visible(abox->cmp_area, FALSE);
+
 	abox->quiet = abox_add_flag(abox,
 			_("Quiet"), _("Don't confirm every operation"),
 			'Q', FALSE);
+
 	shade(abox);
 }
 
+/* Called when a flag toggles */
 static void flag_toggled(GtkToggleButton *toggle, ABox *abox)
 {
-	gint	code;
+	gint code;
 
 	code = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(toggle),
 						 "abox-response"));
+
 	if (code == 'Q')
 		shade(abox);
 
 	g_signal_emit_by_name(abox, "flag_toggled", code);
-
 }
 
+/* Add a flag (check button) to the dialog */
 GtkWidget *abox_add_flag(ABox *abox, const gchar *label, const gchar *tip,
-		   	 gint response, gboolean default_value)
+			 gint response, gboolean default_value)
 {
-	GtkWidget	*check;
+	GtkWidget *check;
 
 	check = gtk_check_button_new_with_label(label);
 	gtk_widget_set_tooltip_text(check, tip);
+
 	g_object_set_data(G_OBJECT(check), "abox-response",
 			  GINT_TO_POINTER(response));
+
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check), default_value);
+
 	g_signal_connect(check, "toggled", G_CALLBACK(flag_toggled), abox);
+
 	gtk_box_append(GTK_BOX(abox->flag_box), check);
 	gtk_widget_set_visible(check, TRUE);
 
 	return check;
 }
 
+/* Handle dialog responses */
 static void response(GtkDialog *dialog, gint response_id)
 {
 	ABox *abox = ABOX(dialog);
@@ -279,7 +293,7 @@ static void response(GtkDialog *dialog, gint response_id)
 		gtk_dialog_response(dialog, GTK_RESPONSE_YES);
 	}
 	else if (response_id == GTK_RESPONSE_YES ||
-					response_id == GTK_RESPONSE_NO)
+		 response_id == GTK_RESPONSE_NO)
 	{
 		abox->question = FALSE;
 		shade(abox);
@@ -312,10 +326,10 @@ void abox_cancel_ask(ABox *abox)
 
 void abox_log(ABox *abox, const gchar *message, const gchar *style)
 {
-	GtkTextIter end;
-	GtkTextBuffer *text_buffer;
-	GtkTextView *log = GTK_TEXT_VIEW(abox->log);
-	gchar *u8 = NULL;
+	GtkTextIter	end;
+	GtkTextBuffer	*text_buffer;
+	GtkTextView	*log = GTK_TEXT_VIEW(abox->log);
+	gchar		*u8 = NULL;
 
 	if (!g_utf8_validate(message, -1, NULL))
 		u8 = to_utf8(message);
@@ -323,8 +337,10 @@ void abox_log(ABox *abox, const gchar *message, const gchar *style)
 	text_buffer = gtk_text_view_get_buffer(log);
 
 	gtk_text_buffer_get_end_iter(text_buffer, &end);
+
 	gtk_text_buffer_insert_with_tags_by_name(text_buffer,
 			&end, u8 ? u8 : message, -1, style, NULL);
+
 	gtk_text_view_scroll_to_mark(
 			log,
 			gtk_text_buffer_get_mark(text_buffer, "insert"),
@@ -335,8 +351,8 @@ void abox_log(ABox *abox, const gchar *message, const gchar *style)
 
 static void abox_finalise(GObject *object)
 {
-	GObjectClass *parent_class;
-	ABox *abox = ABOX(object);
+	GObjectClass	*parent_class;
+	ABox		*abox = ABOX(object);
 
 	if (abox->next_dir)
 	{
@@ -344,7 +360,7 @@ static void abox_finalise(GObject *object)
 		g_source_remove(abox->next_timer);
 	}
 
-	parent_class = g_type_class_peek_parent(G_OBJECT_CLASS(gclass));
+	parent_class = g_type_class_peek_parent(G_OBJECT_GET_CLASS(object));
 
 	if (G_OBJECT_CLASS(parent_class)->finalize)
 		(*G_OBJECT_CLASS(parent_class)->finalize)(object);
@@ -352,7 +368,7 @@ static void abox_finalise(GObject *object)
 
 static gboolean show_next_dir(gpointer data)
 {
-	ABox	*abox = (ABox *) data;
+	ABox *abox = (ABox *) data;
 
 	g_return_val_if_fail(IS_ABOX(abox), FALSE);
 
@@ -374,7 +390,6 @@ void abox_set_current_object(ABox *abox, const gchar *message)
 	/* If a string is already set then replace it, but assume the
 	 * timer is already running...
 	 */
-
 	if (abox->next_dir)
 		g_free(abox->next_dir);
 	else
@@ -392,13 +407,13 @@ static void lost_preview(GtkWidget *window, ABox *abox)
 }
 
 static void select_row_callback(GtkTreeView *treeview,
-				GtkTreePath *path,
-				GtkTreeViewColumn *col,
-				ABox	    *abox)
+				 GtkTreePath *path,
+				 GtkTreeViewColumn *col,
+				 ABox *abox)
 {
-	GtkTreeModel	*model;
-	GtkTreeIter	iter;
-	char		*leaf, *dir;
+	GtkTreeModel *model;
+	GtkTreeIter iter;
+	char *leaf, *dir;
 
 	model = gtk_tree_view_get_model(GTK_TREE_VIEW(abox->results));
 	gtk_tree_model_get_iter(model, &iter, path);
@@ -431,67 +446,74 @@ out:
  */
 void abox_add_results(ABox *abox)
 {
-	GtkTreeViewColumn	*column;
-	GtkWidget	*scroller, *frame;
-	GtkListStore	*model;
-	GtkCellRenderer	*cell_renderer;
+	GtkTreeViewColumn *column;
+	GtkWidget *scroller, *frame;
+	GtkListStore *model;
+	GtkCellRenderer *cell_renderer;
 
 	g_return_if_fail(abox != NULL);
 	g_return_if_fail(IS_ABOX(abox));
 	g_return_if_fail(abox->results == NULL);
 
-	scroller = gtk_scrolled_window_new(NULL, NULL);
+	scroller = gtk_scrolled_window_new();
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroller),
-			GTK_POLICY_NEVER, GTK_POLICY_ALWAYS);
+					GTK_POLICY_NEVER, GTK_POLICY_ALWAYS);
 
 	frame = gtk_frame_new(NULL);
-	gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_IN);
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(abox)->vbox),
-				frame, TRUE, TRUE, 4);
+	/* GTK4: gtk_frame_set_shadow_type removed */
+	gtk_box_append(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(abox))),
+		       frame);
+	gtk_widget_set_vexpand(frame, TRUE);
+	gtk_widget_set_margin_top(frame, 4);
+	gtk_widget_set_margin_bottom(frame, 4);
 
-	gtk_container_add(GTK_CONTAINER(frame), scroller);
+	gtk_frame_set_child(GTK_FRAME(frame), scroller);
 
 	model = gtk_list_store_new(2, G_TYPE_STRING, G_TYPE_STRING);
 	abox->results = gtk_tree_view_new_with_model(GTK_TREE_MODEL(model));
 	g_object_unref(G_OBJECT(model));
 
 	cell_renderer = gtk_cell_renderer_text_new();
+
 	column = gtk_tree_view_column_new_with_attributes(
-				_("Name"), cell_renderer, "text", 0, NULL);
+		_("Name"), cell_renderer, "text", 0, NULL);
 	gtk_tree_view_column_set_resizable(column, TRUE);
 	gtk_tree_view_column_set_sizing(column, GTK_TREE_VIEW_COLUMN_GROW_ONLY);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(abox->results), column);
+
 	gtk_tree_view_insert_column_with_attributes(
-			GTK_TREE_VIEW(abox->results),
-			1, (gchar *) _("Directory"), cell_renderer,
-			"text", 1, NULL);
+		GTK_TREE_VIEW(abox->results),
+		1, (gchar *) _("Directory"), cell_renderer,
+		"text", 1, NULL);
 
-	gtk_container_add(GTK_CONTAINER(scroller), abox->results);
-
+	gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scroller), abox->results);
 	gtk_widget_set_size_request(abox->results, 100, 100);
-	gtk_box_set_child_packing(GTK_BOX(GTK_DIALOG(abox)->vbox),
-			  abox->log_hbox, FALSE, TRUE, 4, GTK_PACK_START);
+
+	/* GTK4: gtk_box_set_child_packing removed */
+	gtk_widget_set_vexpand(abox->log_hbox, FALSE);
 
 	g_signal_connect(abox->results, "row-activated",
-			G_CALLBACK(select_row_callback), abox);
+			 G_CALLBACK(select_row_callback), abox);
 
-	gtk_widget_show_all(frame);
+	gtk_widget_set_visible(frame, TRUE);
 }
 
 void abox_add_filename(ABox *abox, const gchar *path)
 {
 	GtkTreeModel *model;
 	GtkTreeIter iter;
-	gchar	*dir;
+	gchar *dir;
 
 	model = gtk_tree_view_get_model(GTK_TREE_VIEW(abox->results));
 
 	gtk_list_store_append(GTK_LIST_STORE(model), &iter);
 
 	dir = g_path_get_dirname(path);
+
 	gtk_list_store_set(GTK_LIST_STORE(model), &iter,
 			   0, g_basename(path),
 			   1, dir, -1);
+
 	g_free(dir);
 }
 
@@ -504,10 +526,13 @@ void abox_clear_results(ABox *abox)
 	g_return_if_fail(IS_ABOX(abox));
 
 	model = gtk_tree_view_get_model(GTK_TREE_VIEW(abox->results));
-
 	gtk_list_store_clear(GTK_LIST_STORE(model));
 }
 
+/* GTK4: GtkCombo is completely removed - this function needs complete rewrite
+ * For now, commenting out since it's complex and depends on deprecated widgets
+ */
+#if 0
 void abox_add_combo(ABox *abox, const gchar *tlabel, GList *presets,
 		    const gchar *text, GtkWidget *help_button)
 {
@@ -517,31 +542,37 @@ void abox_add_combo(ABox *abox, const gchar *tlabel, GList *presets,
 	g_return_if_fail(IS_ABOX(abox));
 	g_return_if_fail(abox->entry == NULL);
 
-	hbox = gtk_hbox_new(FALSE, 0);
+	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+
 	if (tlabel)
 	{
 		label = gtk_label_new(tlabel);
-		gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, TRUE, 4);
+		gtk_box_append(GTK_BOX(hbox), label);
 	}
 
-	combo = gtk_combo_new();
-	gtk_combo_disable_activate(GTK_COMBO(combo));
-	gtk_combo_set_use_arrows_always(GTK_COMBO(combo), TRUE);
-	gtk_combo_set_popdown_strings(GTK_COMBO(combo), presets);
-	abox->entry = GTK_COMBO(combo)->entry;
+	/* TODO GTK4: Replace GtkCombo with GtkComboBoxText or GtkDropDown */
+	combo = gtk_combo_box_text_new_with_entry();
+
+	for (GList *l = presets; l; l = l->next)
+		gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo), l->data);
+
+	abox->entry = gtk_bin_get_child(GTK_BIN(combo));
 	gtk_entry_set_activates_default(GTK_ENTRY(abox->entry), TRUE);
+	gtk_editable_set_text(GTK_EDITABLE(abox->entry), text);
 
-	gtk_entry_set_text(GTK_ENTRY(abox->entry), text);
-	gtk_box_pack_start(GTK_BOX(hbox), combo, TRUE, TRUE, 4);
+	gtk_box_append(GTK_BOX(hbox), combo);
+	gtk_widget_set_hexpand(combo, TRUE);
 
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(abox)->vbox), hbox,
-				FALSE, TRUE, 0);
-	gtk_box_pack_start(GTK_BOX(hbox), help_button, FALSE, TRUE, 4);
+	gtk_box_append(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(abox))),
+		       hbox);
 
-	gtk_widget_show_all(hbox);
+	gtk_box_append(GTK_BOX(hbox), help_button);
+
+	gtk_widget_set_visible(hbox, TRUE);
 
 	shade(abox);
 }
+#endif
 
 void abox_add_entry(ABox *abox, const gchar *text, GtkWidget *help_button)
 {
@@ -551,21 +582,25 @@ void abox_add_entry(ABox *abox, const gchar *text, GtkWidget *help_button)
 	g_return_if_fail(IS_ABOX(abox));
 	g_return_if_fail(abox->entry == NULL);
 
-	hbox = gtk_hbox_new(FALSE, 0);
+	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+
 	label = gtk_label_new(_("Expression:"));
-	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, TRUE, 4);
+	gtk_box_append(GTK_BOX(hbox), label);
+
 	abox->entry = gtk_entry_new();
 	gtk_widget_set_name(abox->entry, "fixed-style");
-	gtk_entry_set_text(GTK_ENTRY(abox->entry), text);
-	gtk_box_pack_start(GTK_BOX(hbox), abox->entry, TRUE, TRUE, 4);
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(abox)->vbox),
-				hbox, FALSE, TRUE, 4);
-	gtk_box_pack_start(GTK_BOX(hbox), help_button,
-				FALSE, TRUE, 4);
+	gtk_editable_set_text(GTK_EDITABLE(abox->entry), text);
+	gtk_box_append(GTK_BOX(hbox), abox->entry);
+	gtk_widget_set_hexpand(abox->entry, TRUE);
+
+	gtk_box_append(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(abox))),
+		       hbox);
+
+	gtk_box_append(GTK_BOX(hbox), help_button);
 
 	gtk_entry_set_activates_default(GTK_ENTRY(abox->entry), TRUE);
 
-	gtk_widget_show_all(hbox);
+	gtk_widget_set_visible(hbox, TRUE);
 
 	shade(abox);
 }
@@ -590,6 +625,7 @@ static void shade(ABox *abox)
 	 * right place...
 	 */
 	gtk_window_set_focus(GTK_WINDOW(abox), NULL);
+
 	/* Note: Gtk+-2.0.0 will segfault on Return if an insensitive
 	 * widget is the default.
 	 */
@@ -606,18 +642,20 @@ static void shade(ABox *abox)
 	}
 }
 
+/* GTK4: delete-event signal removed, needs rewrite with close-request
 static gboolean abox_delete(GtkWidget *dialog, GdkEventAny *event)
 {
 	g_signal_emit_by_name(dialog, "abort_operation");
 	return TRUE;
 }
+*/
 
 void abox_show_compare(ABox *abox, gboolean show)
 {
 	if (show)
-		gtk_widget_show(abox->cmp_area);
+		gtk_widget_set_visible(abox->cmp_area, TRUE);
 	else
-		gtk_widget_hide(abox->cmp_area);
+		gtk_widget_set_visible(abox->cmp_area, FALSE);
 }
 
 void abox_set_file(ABox *abox, int i, const gchar *path)
@@ -630,66 +668,72 @@ void abox_set_file(ABox *abox, int i, const gchar *path)
 
 	if (!path || !path[0])
 	{
-		gtk_widget_hide(abox->cmp_icon[i]);
-		gtk_widget_hide(abox->cmp_name[i]);
-		gtk_widget_hide(abox->cmp_size[i]);
-		gtk_widget_hide(abox->cmp_date[i]);
-		gtk_widget_hide(abox->cmp_arrow);
+		gtk_widget_set_visible(abox->cmp_icon[i], FALSE);
+		gtk_widget_set_visible(abox->cmp_name[i], FALSE);
+		gtk_widget_set_visible(abox->cmp_size[i], FALSE);
+		gtk_widget_set_visible(abox->cmp_date[i], FALSE);
+		gtk_widget_set_visible(abox->cmp_arrow, FALSE);
 		return;
 	}
 
 	base = g_path_get_basename(path);
 	item = diritem_new(base);
 	g_free(base);
+
 	diritem_restat(path, item, NULL);
 
 	gtk_image_set_from_pixbuf(GTK_IMAGE(abox->cmp_icon[i]),
 				  di_image(item)->pixbuf);
-	gtk_widget_show(abox->cmp_icon[i]);
+	gtk_widget_set_visible(abox->cmp_icon[i], TRUE);
 
 	gtk_label_set_text(GTK_LABEL(abox->cmp_name[i]), item->leafname);
-	gtk_widget_show(abox->cmp_name[i]);
-	gtk_widget_show(abox->cmp_arrow);
+	gtk_widget_set_visible(abox->cmp_name[i], TRUE);
+
+	gtk_widget_set_visible(abox->cmp_arrow, TRUE);
 
 	if (item->lstat_errno)
 	{
 		gtk_label_set_text(GTK_LABEL(abox->cmp_size[i]), "Error");
 		gtk_label_set_text(GTK_LABEL(abox->cmp_date[i]),
-				g_strerror(item->lstat_errno));
+				   g_strerror(item->lstat_errno));
 	}
 	else
 	{
 		gchar *str;
 
 		gtk_label_set_text(GTK_LABEL(abox->cmp_size[i]),
-				format_size_aligned(item->size));
+				   format_size_aligned(item->size));
 
 		str = pretty_time(&item->mtime);
 		gtk_label_set_text(GTK_LABEL(abox->cmp_date[i]), str);
 		g_free(str);
 	}
 
-	gtk_widget_show(abox->cmp_size[i]);
-	gtk_widget_show(abox->cmp_date[i]);
+	gtk_widget_set_visible(abox->cmp_size[i], TRUE);
+	gtk_widget_set_visible(abox->cmp_date[i], TRUE);
 
 	diritem_free(item);
 }
 
-void    abox_set_percentage(ABox *abox, int per)
+void abox_set_percentage(ABox *abox, int per)
 {
-	if(!abox->progress) {
+	if (!abox->progress)
+	{
 		GtkDialog *dialog = GTK_DIALOG(abox);
-
-		abox->progress=gtk_progress_bar_new ();
-		gtk_box_pack_start(GTK_BOX(dialog->vbox),
-				abox->progress, FALSE, FALSE, 2);
-		gtk_widget_show(abox->progress);
+		abox->progress = gtk_progress_bar_new();
+		gtk_box_append(GTK_BOX(gtk_dialog_get_content_area(dialog)),
+			       abox->progress);
+		gtk_widget_set_margin_top(abox->progress, 2);
+		gtk_widget_set_margin_bottom(abox->progress, 2);
+		gtk_widget_set_visible(abox->progress, TRUE);
 	}
-	if(per<0 || per>100) {
-		gtk_widget_hide(abox->progress);
+
+	if (per < 0 || per > 100)
+	{
+		gtk_widget_set_visible(abox->progress, FALSE);
 		return;
 	}
-	gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(abox->progress),
-				      per/100.);
-}
 
+	gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(abox->progress),
+				       per / 100.);
+}

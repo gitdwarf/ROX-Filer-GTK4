@@ -8,7 +8,7 @@
 
 #include <gtk/gtk.h>
 
-#define ABOX(obj) GTK_CHECK_CAST((obj), abox_get_type(), ABox)
+#define ABOX(obj) G_TYPE_CHECK_INSTANCE_CAST((obj), abox_get_type(), ABox)
 #define ABOX_CLASS(klass) GTK_CHECK_CLASS_CAST((klass), \
 					abox_get_type(), ABoxClass)
 #define IS_ABOX(obj) G_TYPE_CHECK_INSTANCE_TYPE((obj), abox_get_type())
@@ -72,7 +72,7 @@ void	abox_add_filename		(ABox *abox,
 					 const gchar *pathname);
 void	abox_clear_results		(ABox *abox);
 void	abox_add_combo			(ABox *abox,
-					 const gchar *tlabel, 
+					 const gchar *tlabel,
 					 GList *presets,
 					 const gchar *text,
 					 GtkWidget *help_button);

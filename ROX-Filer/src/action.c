@@ -32,6 +32,7 @@
 #include <sys/time.h>
 #include <utime.h>
 #include <stdarg.h>
+#include <gio/gio.h>
 
 #include "global.h"
 
@@ -53,13 +54,14 @@
 #include "xtypes.h"
 #include "log.h"
 
+
 #if defined(HAVE_GETXATTR)
 # define ATTR_MAN_PAGE N_("See the attr(5) man page for full details.")
 #elif defined(HAVE_ATTROPEN)
 # define ATTR_MAN_PAGE N_("See the fsattr(5) man page for full details.")
 #else
 # define ATTR_MAN_PAGE N_("You do not appear to have OS support.")
-#endif 
+#endif
 
 /* Parent->Child messages are one character each:
  *
@@ -165,7 +167,8 @@ static void entry_changed(GtkEditable *entry, GUIside *gui_side)
 
 	g_return_if_fail(gui_side->default_string != NULL);
 
-	text = gtk_editable_get_chars(entry, 0, -1);
+	const char *temp_text = gtk_editable_get_text(GTK_EDITABLE(entry));
+	text = g_strdup(temp_text);
 
 	if (gui_side->entry_string_func)
 		gui_side->entry_string_func(GTK_WIDGET(entry), text);
@@ -190,13 +193,18 @@ void show_condition_help(gpointer data)
 	help = gtk_dialog_new_with_buttons(
 			_("Find expression reference"),
 			NULL, 0,
-			GTK_STOCK_CLOSE, GTK_RESPONSE_CANCEL,
+			"_Close", GTK_RESPONSE_CANCEL,
 			NULL);
 	gtk_dialog_set_default_response(GTK_DIALOG(help), GTK_RESPONSE_CANCEL);
 
 	text = gtk_label_new(NULL);
-	gtk_misc_set_padding(GTK_MISC(text), 2, 2);
-	gtk_box_pack_start_defaults(GTK_BOX(GTK_DIALOG(help)->vbox), text);
+	gtk_widget_set_margin_start(text, 2);
+	gtk_widget_set_margin_end(text, 2);
+	gtk_widget_set_margin_top(text, 2);
+	gtk_widget_set_margin_bottom(text, 2);
+	gtk_box_append(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(help))), text);
+	gtk_widget_set_hexpand(text, TRUE);
+	gtk_widget_set_vexpand(text, TRUE);
 	gtk_label_set_selectable(GTK_LABEL(text), TRUE);
 	gtk_label_set_markup(GTK_LABEL(text), _(
 "<u>Quick Start</u>\n"
@@ -235,9 +243,9 @@ void show_condition_help(gpointer data)
 "<b>prune</b> (false, and prevents searching the contents of a directory)."));
 
 	g_signal_connect(help, "response",
-			G_CALLBACK(gtk_widget_destroy), NULL);
+			G_CALLBACK(gtk_window_destroy), NULL);
 
-	gtk_widget_show_all(help);
+	gtk_widget_set_visible(help, TRUE);
 }
 
 static void show_chmod_help(gpointer data)
@@ -248,13 +256,18 @@ static void show_chmod_help(gpointer data)
 	help = gtk_dialog_new_with_buttons(
 			_("Change permissions reference"),
 			NULL, 0,
-			GTK_STOCK_CLOSE, GTK_RESPONSE_CANCEL,
+			"_Close", GTK_RESPONSE_CANCEL,
 			NULL);
 	gtk_dialog_set_default_response(GTK_DIALOG(help), GTK_RESPONSE_CANCEL);
 
 	text = gtk_label_new(NULL);
-	gtk_misc_set_padding(GTK_MISC(text), 2, 2);
-	gtk_box_pack_start_defaults(GTK_BOX(GTK_DIALOG(help)->vbox), text);
+	gtk_widget_set_margin_start(text, 2);
+	gtk_widget_set_margin_end(text, 2);
+	gtk_widget_set_margin_top(text, 2);
+	gtk_widget_set_margin_bottom(text, 2);
+	gtk_box_append(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(help))), text);
+	gtk_widget_set_hexpand(text, TRUE);
+	gtk_widget_set_vexpand(text, TRUE);
 	gtk_label_set_selectable(GTK_LABEL(text), TRUE);
 	gtk_label_set_markup(GTK_LABEL(text), _(
 "Normally, you can just select a command from the menu (click \n"
@@ -286,9 +299,9 @@ static void show_chmod_help(gpointer data)
 "See the chmod(1) man page for full details."));
 
 	g_signal_connect(help, "response",
-			G_CALLBACK(gtk_widget_destroy), NULL);
+			G_CALLBACK(gtk_window_destroy), NULL);
 
-	gtk_widget_show_all(help);
+	gtk_widget_set_visible(help, TRUE);
 }
 
 
@@ -300,36 +313,46 @@ static void show_settype_help(gpointer data)
 	help = gtk_dialog_new_with_buttons(
 			_("Set type reference"),
 			NULL, 0,
-			GTK_STOCK_CLOSE, GTK_RESPONSE_CANCEL,
+			"_Close", GTK_RESPONSE_CANCEL,
 			NULL);
 	gtk_dialog_set_default_response(GTK_DIALOG(help), GTK_RESPONSE_CANCEL);
 
 	text = gtk_label_new(NULL);
-	gtk_misc_set_padding(GTK_MISC(text), 2, 2);
-	gtk_box_pack_start_defaults(GTK_BOX(GTK_DIALOG(help)->vbox), text);
+	gtk_widget_set_margin_start(text, 2);
+	gtk_widget_set_margin_end(text, 2);
+	gtk_widget_set_margin_top(text, 2);
+	gtk_widget_set_margin_bottom(text, 2);
+	gtk_box_append(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(help))), text);
+	gtk_widget_set_hexpand(text, TRUE);
+	gtk_widget_set_vexpand(text, TRUE);
 	gtk_label_set_selectable(GTK_LABEL(text), TRUE);
 	gtk_label_set_markup(GTK_LABEL(text), _(
 "Normally ROX-Filer determines the type of a regular file\n"
 "by matching it's name against a pattern. To change the\n"
-"type of the file you must rename it.\n" 
+"type of the file you must rename it.\n"
 "\n"
 "Newer file systems can support something called 'Extended\n"
 "Attributes' which can be used to store additional data with\n"
 "each file as named parameters. ROX-Filer uses the\n"
-"'user.mime_type' attribute to store file types.\n" 
+"'user.mime_type' attribute to store file types.\n"
 "\n"
 "File types are only supported for regular files, not\n"
 "directories, devices, pipes or sockets, and then only\n"
 "on certain file systems and where the OS implements them.\n"));
 
 	text = gtk_label_new(_(ATTR_MAN_PAGE));
-	gtk_misc_set_padding(GTK_MISC(text), 2, 2);
-	gtk_box_pack_start_defaults(GTK_BOX(GTK_DIALOG(help)->vbox), text);
+	gtk_widget_set_margin_start(text, 2);
+	gtk_widget_set_margin_end(text, 2);
+	gtk_widget_set_margin_top(text, 2);
+	gtk_widget_set_margin_bottom(text, 2);
+	gtk_box_append(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(help))), text);
+	gtk_widget_set_hexpand(text, TRUE);
+	gtk_widget_set_vexpand(text, TRUE);
 
 	g_signal_connect(help, "response",
-			G_CALLBACK(gtk_widget_destroy), NULL);
+			G_CALLBACK(gtk_window_destroy), NULL);
 
-	gtk_widget_show_all(help);
+	gtk_widget_set_visible(help, TRUE);
 }
 
 static void process_message(GUIside *gui_side, const gchar *buffer)
@@ -370,7 +393,7 @@ static void process_message(GUIside *gui_side, const gchar *buffer)
 		gui_side->errors++;
 		abox_log(abox, buffer + 1, "error");
 	}
-	else if (*buffer == '<') 
+	else if (*buffer == '<')
 		abox_set_file(abox, 0, buffer+1);
 	else if (*buffer == '>')
 	{
@@ -386,21 +409,20 @@ static void process_message(GUIside *gui_side, const gchar *buffer)
 }
 
 /* Called when the child sends us a message */
-static void message_from_child(gpointer 	  data,
-			        gint     	  source, 
-			        GdkInputCondition condition)
+static gboolean message_from_child(gpointer data)
 {
 	char buf[5];
-	GUIside	*gui_side = (GUIside *) data;
-	ABox	*abox = gui_side->abox;
-	GtkTextBuffer *text_buffer;
+	GUIside		*gui_side = (GUIside *) data;
+	ABox		*abox = gui_side->abox;
+	GtkTextBuffer	*text_buffer;
+	int source = gui_side->from_child;
 
 	text_buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(abox->log));
 
 	if (read_exact(source, buf, 4))
 	{
 		ssize_t message_len;
-		char	*buffer;
+		char *buffer;
 
 		buf[4] = '\0';
 		message_len = strtol(buf, NULL, 16);
@@ -410,7 +432,7 @@ static void message_from_child(gpointer 	  data,
 			buffer[message_len] = '\0';
 			process_message(gui_side, buffer);
 			g_free(buffer);
-			return;
+			return G_SOURCE_CONTINUE;
 		}
 		g_printerr("Child died in the middle of a message.\n");
 	}
@@ -425,6 +447,7 @@ static void message_from_child(gpointer 	  data,
 	gui_side->to_child = NULL;
 	close(gui_side->from_child);
 	g_source_remove(gui_side->input_tag);
+
 	abox_cancel_ask(gui_side->abox);
 
 	if (gui_side->errors)
@@ -435,14 +458,15 @@ static void message_from_child(gpointer 	  data,
 			report = g_strdup(_("There was one error.\n"));
 		else
 			report = g_strdup_printf(_("There were %d errors.\n"),
-							gui_side->errors);
+						 gui_side->errors);
 
 		gtk_text_buffer_insert_at_cursor(text_buffer, report, -1);
-
 		g_free(report);
 	}
 	else if (gui_side->show_info == FALSE)
-		gtk_widget_destroy(GTK_WIDGET(gui_side->abox));
+		gtk_window_destroy(GTK_WINDOW(gui_side->abox));
+
+	return G_SOURCE_REMOVE;
 }
 
 /* Scans src_dir, calling cb(item, dest_path) for each item */
@@ -747,7 +771,7 @@ static void abort_operation(GtkWidget *widget, gpointer data)
 		gui_side->abort_attempts++;
 	}
 	else
-		gtk_widget_destroy(widget);
+		gtk_window_destroy(GTK_WINDOW(widget));
 }
 
 static void destroy_action_window(GtkWidget *widget, gpointer data)
@@ -763,7 +787,7 @@ static void destroy_action_window(GtkWidget *widget, gpointer data)
 	}
 
 	g_free(gui_side);
-	
+
 	one_less_window();
 }
 
@@ -782,7 +806,7 @@ static GUIside *start_action(GtkWidget *abox, ActionChild *func, gpointer data,
 	if (pipe(filedes))
 	{
 		report_error("pipe: %s", g_strerror(errno));
-		gtk_widget_destroy(abox);
+		gtk_window_destroy(GTK_WINDOW(abox));
 		return NULL;
 	}
 
@@ -791,7 +815,7 @@ static GUIside *start_action(GtkWidget *abox, ActionChild *func, gpointer data,
 		close(filedes[0]);
 		close(filedes[1]);
 		report_error("pipe: %s", g_strerror(errno));
-		gtk_widget_destroy(abox);
+		gtk_window_destroy(GTK_WINDOW(abox));
 		return NULL;
 	}
 
@@ -808,7 +832,7 @@ static GUIside *start_action(GtkWidget *abox, ActionChild *func, gpointer data,
 	{
 		case -1:
 			report_error("fork: %s", g_strerror(errno));
-			gtk_widget_destroy(abox);
+			gtk_window_destroy(GTK_WINDOW(abox));
 			return NULL;
 		case 0:
 			/* We are the child */
@@ -859,10 +883,11 @@ static GUIside *start_action(GtkWidget *abox, ActionChild *func, gpointer data,
 	g_signal_connect(abox, "abort_operation",
 			 G_CALLBACK(abort_operation), gui_side);
 
-	gui_side->input_tag = gdk_input_add_full(gui_side->from_child,
-						GDK_INPUT_READ,
-						message_from_child,
-						gui_side, NULL);
+/* GTK4: gdk_input_add_full removed, using GIOChannel instead */
+GIOChannel *channel = g_io_channel_unix_new(gui_side->from_child);
+gui_side->input_tag = g_io_add_watch(channel, G_IO_IN | G_IO_HUP,
+					(GIOFunc)message_from_child, gui_side);
+g_io_channel_unref(channel);
 
 	return gui_side;
 }
@@ -924,7 +949,7 @@ static void do_delete(const char *src_path, const char *unused)
 	if (write_prot || !quiet)
 	{
 		int res;
-		
+
 		printf_send("<%s", src_path);
 		printf_send(">");
 		res=printf_reply(from_parent, write_prot && !o_force,
@@ -957,15 +982,16 @@ static void do_delete(const char *src_path, const char *unused)
 	else
 	{
 		send_check_path(safe_path);
-		if (strcmp(g_basename(safe_path), ".DirIcon") == 0)
+		gchar *basename = g_path_get_basename(safe_path);
+		if (strcmp(basename, ".DirIcon") == 0)
 		{
 			gchar *dir;
 			dir = g_path_get_dirname(safe_path);
 			send_check_path(dir);
 			g_free(dir);
 		}
+		g_free(basename);
 	}
-
 	g_free(safe_path);
 }
 
@@ -973,7 +999,7 @@ static void do_eject(const char *path)
 {
 	const char *argv[]={"sh", "-c", NULL, NULL};
 	char *err;
-	
+
 	check_flags();
 
 	if (!quiet)
@@ -1699,7 +1725,7 @@ static void usage_cb(gpointer data)
 		send_dir(path);
 
 		size_tally = 0;
-		
+
 		if(n>1 && i>0)
 		{
 			per=100*i/n;
@@ -1716,7 +1742,7 @@ static void usage_cb(gpointer data)
 
 	g_string_printf(message, _("'\nTotal: %s ("),
 			format_double_size(total_size));
-	
+
 	if (file_counter)
 		g_string_append_printf(message,
 				"%ld %s%s", file_counter,
@@ -1730,7 +1756,7 @@ static void usage_cb(gpointer data)
 				"%ld %s)\n", dir_counter,
 				dir_counter == 1 ? _("directory")
 						 : _("directories"));
-	
+
 	send_msg();
 }
 
@@ -1810,7 +1836,7 @@ static void delete_cb(gpointer data)
 
 		g_free(dir);
 	}
-	
+
 	send_done();
 }
 
@@ -1824,7 +1850,7 @@ static void eject_cb(gpointer data)
 	for (i=0; paths; paths = paths->next, i++)
 	{
 		guchar	*path = (guchar *) paths->data;
-		
+
 		if(n>1 && i>0)
 		{
 			per=100*i/n;
@@ -1834,7 +1860,7 @@ static void eject_cb(gpointer data)
 
 		do_eject(path);
 	}
-	
+
 	send_done();
 }
 
@@ -1859,7 +1885,7 @@ static void find_cb(gpointer data)
 			break;
 		printf_send("#");
 	}
-	
+
 	send_done();
 }
 
@@ -1890,7 +1916,7 @@ static void chmod_cb(gpointer data)
 		else
 			do_chmod(path, NULL);
 	}
-	
+
 	send_done();
 }
 
@@ -1921,7 +1947,7 @@ static void settype_cb(gpointer data)
 		else
 			do_settype(path, NULL);
 	}
-	
+
 	send_done();
 }
 
@@ -2006,7 +2032,7 @@ void action_usage(GList *paths)
 	abox = abox_new(_("Disk Usage"), TRUE);
 	if(paths && paths->next)
 		abox_set_percentage(ABOX(abox), 0);
-	
+
 	gui_side = start_action(abox, usage_cb, paths,
 					 o_action_force.int_value,
 					 o_action_brief.int_value,
@@ -2139,7 +2165,7 @@ void action_chmod(GList *paths, gboolean force_recurse, const char *action)
 				o_action_brief.int_value,
 				recurse,
 				o_action_newer.int_value);
-	
+
 	if (!gui_side)
 		goto out;
 
@@ -2202,7 +2228,7 @@ void action_settype(GList *paths, gboolean force_recurse, const char *oldtype)
 				o_action_brief.int_value,
 				recurse,
 				o_action_newer.int_value);
-	
+
 	if (!gui_side)
 		goto out;
 
@@ -2420,7 +2446,7 @@ static gboolean remove_pinned_ok(GList *paths)
 	for (; paths; paths = paths->next)
 	{
 		guchar	*path = (guchar *) paths->data;
-		
+
 		if (icons_require(path))
 		{
 			if (++ask_n > MAX_ASK)
@@ -2453,7 +2479,7 @@ static gboolean remove_pinned_ok(GList *paths)
 			leaf++;
 		else
 			leaf = path;
-		
+
 		g_string_append_c(message, '`');
 		g_string_append(message, leaf);
 		g_string_append_c(message, '\'');
@@ -2478,11 +2504,11 @@ static gboolean remove_pinned_ok(GList *paths)
 				_(" will affect some items on the pinboard "
 					"or panel - really delete them?"));
 	}
-	
-	retval = confirm(message->str, GTK_STOCK_DELETE, NULL);
+
+	retval = confirm(message->str, "edit-delete", NULL);
 
 	g_string_free(message, TRUE);
-	
+
 	return retval;
 }
 
